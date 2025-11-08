@@ -12,10 +12,14 @@ import { AddGroceryForm } from "@/components/groceries/AddGroceryForm";
 
 export default function DashboardPage() {
   const router = useRouter();
-
   const { data: items = [], isLoading, error } = useGroceries();
-  const { mutate: addGrocery, isPending: adding } = useAddGrocery();
   const { mutate: deleteGrocery, isPending: deleting } = useDeleteGrocery();
+
+  function onDelete(id: number | string) {
+    if (confirm("Delete this grocery item?")) {
+      deleteGrocery(id);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black p-8">
