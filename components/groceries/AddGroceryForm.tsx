@@ -3,26 +3,27 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAddGrocery } from "@/hooks/useAddGrocery";
+import type { GroceryCreate } from "@/lib/api";
 
-export function AddGroceryForm() {
-  const { mutate: addGrocery, isPending } = useAddGrocery();
-
+export function AddGroceryForm({ onAdd }: { onAdd: (g: GroceryCreate) => Promise<void> }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
 
-    addGrocery({
+    setLoading(true);
+    await onAdd({
       name: name.trim(),
-      category: category.trim() || undefined,
-      calories: calories ? Number(calories) : undefined,
-      protein: protein ? Number(protein) : undefined,
+      category: category.trim() || null,
+      calories: calories ? Number(calories) : null,
+      protein: protein ? Number(protein) : null,
     });
+    setLoading(false);
 
     setName("");
     setCategory("");
@@ -35,9 +36,9 @@ export function AddGroceryForm() {
       <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
       <Input placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
       <Input placeholder="Calories" inputMode="numeric" value={calories} onChange={(e) => setCalories(e.target.value.replace(/[^\d]/g, ""))} />
-      <Input placeholder="Protein" inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value.replace(/[^\d]/g, ""))} />
-      <Button type="submit" disabled={isPending}>
-        {isPending ? "Adding..." : "Add"}
+      <Input placeholder="Protein (g)" inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value.replace(/[^\d]/g, ""))} />
+      <Button type="submit" disabled={loading}>
+        {loading ? "Adding..." : "Add"}
       </Button>
     </form>
   );
