@@ -1,28 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GroceriesAPI, type Grocery } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { useGroceries } from "@/hooks/useGroceries";
+import { useAddGrocery } from "@/hooks/useAddGrocery";
+import { useDeleteGrocery } from "@/hooks/useDeleteGrocery";
+import { AddGroceryForm } from "@/components/groceries/AddGroceryForm";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [items, setItems] = useState<Grocery[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: items = [], isLoading, error } = useGroceries();
+  const { mutate: deleteGrocery, isPending: deleting } = useDeleteGrocery();
 
-  useEffect(() => {
-    GroceriesAPI.list()
-      .then(setItems)
-      .catch((e) => setError(e.message ?? "Error fetching groceries"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading)
-    return <div className="p-8 text-center">Loading groceries...</div>;
-  if (error)
-    return <div className="p-8 text-center text-red-600">Error: {error}</div>;
+  function onDelete(id: number | string) {
+    if (confirm("Delete this grocery item?")) {
+      deleteGrocery(id);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black p-8">
@@ -30,37 +27,45 @@ export default function DashboardPage() {
         Dashboard
       </h1>
 
+      <AddGroceryForm />
+
+      {/* Empty State */}
       {items.length === 0 ? (
         <div className="text-center text-gray-600 dark:text-gray-300">
-          No groceries found. Try adding one on the test page!
+          No groceries yet — add one above!
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {items.map((g) => (
+          {items.map((g: any) => (
             <Card
               key={g.id}
-              className="p-6 bg-white dark:bg-zinc-800 shadow-md rounded-lg cursor-pointer hover:shadow-lg transition"
-              onClick={() =>
-                router.push(`/groceries/${g.id}`)
-              }
+              className="p-6 bg-white dark:bg-zinc-800 shadow-md rounded-lg transition"
             >
-              <h2 className="text-xl font-semibold mb-2 text-black dark:text-zinc-50">
-                {g.name}
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300">
-                {g.category ?? "—"} · {g.calories ?? "?"} kcal ·{" "}
-                {g.protein ?? "?"} g protein
-              </p>
+              <div
+                className="cursor-pointer"
+                onClick={() => router.push(`/groceries/${g.id}`)}
+              >
+                <h2 className="text-xl font-semibold mb-2 text-black dark:text-zinc-50">
+                  {g.name}
+                </h2>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {(g.category ?? "—")} · {(g.calories ?? "?")} kcal · {(g.protein ?? "?")} g protein
+                </p>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="destructive"
+                  disabled={deleting}
+                  onClick={() => onDelete(g.id)}
+                >
+                  {deleting ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
       )}
-
-      <div className="flex justify-center mt-10">
-        <Button onClick={() => router.push("/groceries/new")}>
-          Add New Grocery
-        </Button>
-      </div>
     </div>
   );
 }

@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Recipe } from "@/types";
 
+=======
+>>>>>>> 2f50e69e5b19e8c44c35d11adce62aa71b9035a2
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
