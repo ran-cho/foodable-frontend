@@ -6,12 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
+// Define Post type
+type Post = {
+  id: number;
+  user: { id: number; name: string; avatar: string };
+  type: "recipe" | "grocery" | "text";
+  content: string;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  liked: boolean;
+  recipeId?: number;
+  recipeName?: string;
+};
+
 // Mock data - replace with backend API later
-const mockPosts = [
+const mockPosts: Post[] = [
   {
     id: 1,
     user: { id: 1, name: "Sarah Chen", avatar: "👩‍🍳" },
-    type: "recipe" as const,
+    type: "recipe",
     content: "Just made the best avocado toast! Check out my recipe.",
     recipeId: 1,
     recipeName: "Avocado Toast Supreme",
@@ -23,7 +37,7 @@ const mockPosts = [
   {
     id: 2,
     user: { id: 2, name: "Mike Johnson", avatar: "👨‍🍳" },
-    type: "grocery" as const,
+    type: "grocery",
     content: "Sharing my weekly meal prep grocery list!",
     likes: 12,
     comments: 3,
@@ -33,7 +47,7 @@ const mockPosts = [
   {
     id: 3,
     user: { id: 3, name: "Emma Wilson", avatar: "👩" },
-    type: "recipe" as const,
+    type: "recipe",
     content: "Found a great low-calorie dinner option. 400 cal per serving!",
     recipeId: 2,
     recipeName: "Grilled Chicken Salad",
@@ -45,7 +59,7 @@ const mockPosts = [
 ];
 
 export default function CommunityPage() {
-  const [posts, setPosts] = useState(mockPosts);
+  const [posts, setPosts] = useState<Post[]>(mockPosts);
   const [newPost, setNewPost] = useState("");
 
   const handleLike = (postId: number) => {
@@ -60,10 +74,10 @@ export default function CommunityPage() {
     if (!newPost.trim()) return;
     
     // TODO: Send to backend API
-    const post = {
+    const post: Post = {
       id: Date.now(),
       user: { id: 999, name: "You", avatar: "😊" },
-      type: "text" as const,
+      type: "text",
       content: newPost,
       likes: 0,
       comments: 0,
