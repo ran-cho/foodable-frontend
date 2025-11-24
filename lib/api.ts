@@ -1,3 +1,5 @@
+// lib/api.ts
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -6,15 +8,22 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     cache: "no-store",
   });
+
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`API ${res.status} ${res.statusText}: ${text}`);
   }
+
   if (res.status === 204) {
     return null as T;
   }
+
   return res.json() as Promise<T>;
 }
+
+/* -------------------------------------------
+   GROCERIES API
+------------------------------------------- */
 
 export type Grocery = {
   id: number;
@@ -34,5 +43,38 @@ export const GroceriesAPI = {
   delete: (id: number) =>
     api<null>(`/groceries/${id}`, { method: "DELETE" }),
 };
+
+/* -------------------------------------------
+   AI SUGGEST API
+------------------------------------------- */
+
+export type AISuggestRequest = {
+  query: string;
+  dietary_restrictions: string[];
+  max_results: number;
+};
+
+export type AISuggestion = {
+  name: string;
+  description: string;
+  ingredients: string[];
+  calories?: number | null;
+  protein?: number | null;
+  estimated_cost?: number | null;
+};
+
+export type AISuggestResponse = {
+  original_query: string;
+  suggestions: AISuggestion[];
+};
+
+export const AiAPI = {
+  suggest: (payload: AISuggestRequest) =>
+    api<AISuggestResponse>("/ai/suggest", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};
+
 
 export { BASE_URL };
