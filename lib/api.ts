@@ -105,4 +105,31 @@ export function useAISuggestions() {
   });
 }
 
+/* -------------------------------------------------------
+   AI SUGGESTIONS API
+------------------------------------------------------- */
+
+export type AISuggestRequest = {
+  query: string;
+  dietary_restrictions: string[];
+  max_results: number;
+};
+
+export type AISuggestion = {
+  name: string;
+  description: string;
+  ingredients: string[];
+  calories?: number | null;
+  protein?: number | null;
+  estimated_cost?: number | null;
+};
+
+export const AiAPI = {
+  suggest: (payload: AISuggestRequest) =>
+    api<any>("/ai/suggest", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};
+
 export { BASE_URL };
