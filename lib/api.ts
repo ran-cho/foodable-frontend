@@ -1,3 +1,6 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Recipe } from "@/types";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -13,6 +16,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ===== Types =====
 export type Grocery = {
   id: number;
   name: string;
@@ -22,12 +26,83 @@ export type Grocery = {
 };
 
 export type GroceryCreate = Omit<Grocery, "id">;
+export type RecipeCreate = Omit<Recipe, "id">;
 
+// ===== Groceries API =====
 export const GroceriesAPI = {
   list: () => api<Grocery[]>("/groceries/"),
   get: (id: number) => api<Grocery>(`/groceries/${id}`),
   create: (data: GroceryCreate) =>
     api<Grocery>("/groceries/", { method: "POST", body: JSON.stringify(data) }),
 };
+
+// ===== Recipes API =====
+export const RecipesAPI = {
+  list: () => api<Recipe[]>("/recipes/"),
+  get: (id: number) => api<Recipe>(`/recipes/${id}`),
+  create: (data: RecipeCreate) =>
+    api<Recipe>("/recipes/", { method: "POST", body: JSON.stringify(data) }),
+};
+
+// ===== AI API =====
+export type AISuggestionRequest = {
+  query: string;
+  dietary_restrictions?: string[];
+  max_results?: number;
+};
+
+export type AISuggestedRecipe = {
+  name: string;
+  description: string;
+  ingredients: string[];
+  cost?: string;
+  calories?: number;
+  protein?: number;
+  prepTime?: string;
+  cookTime?: string;
+};
+
+export const AIAPI = {
+  getSuggestions: (data: AISuggestionRequest) =>
+    api<AISuggestedRecipe[]>("/ai/suggest", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+// ===== React Query Hooks =====
+
+// Recipes hooks
+export function useRecipes() {
+  return useQuery({
+    queryKey: ["recipes"],
+    queryFn: RecipesAPI.list,
+  });
+}
+
+export function useRecipe(id: number) {
+  return useQuery({
+    queryKey: ["recipe", id],
+    queryFn: () => RecipesAPI.get(id),
+    enabled: !!id && id > 0,
+  });
+}
+
+export function useCreateRecipe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: RecipesAPI.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
+    },
+  });
+}
+
+// AI suggestion hook
+export function useAISuggestions() {
+  return useMutation({
+    mutationFn: AIAPI.getSuggestions,
+  });
+}
 
 export { BASE_URL };
