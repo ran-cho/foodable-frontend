@@ -63,22 +63,36 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
     };
   }, [query]);
 
+  // Function to clean ingredient names on dashboard by removing quantities and descriptors
+  function cleanIngredientName(text: string) {
+  return text
+    // remove fractions / numbers + units
+    .replace(/^\s*\d+([\/.]\d+)?\s*[a-zA-Z]*\s*/g, "")
+    // remove parentheses like (minced)
+    .replace(/\(.*?\)/g, "")
+    // trim leftover spaces
+    .trim();
+}
+
+
   function handleUseIdea(s: AISuggestion) {
-    // Take the first 3–5 ingredients from the AI recipe
-    const ingredients = (s.ingredients ?? []).slice(0, 5);
+  const firstFive = s.ingredients.slice(0, 5);
 
-    // If backend ever forgets ingredients, fall back to recipe name
-    const itemsToAdd = ingredients.length > 0 ? ingredients : [s.name];
+  firstFive.forEach((ing) => {
+    const cleaned = cleanIngredientName(ing);
 
-    itemsToAdd.forEach((ingredient) => {
-      // useAddGrocery only *needs* name; others are optional
-      addGrocery({
-        name: ingredient,
-      });
+    addGrocery({
+      name: cleaned,
+      category: "AI Suggested",
+      calories: undefined,
+      protein: undefined,
     });
+  });
 
-    alert(`Added ${itemsToAdd.length} grocery items from "${s.name}" to your dashboard.`);
-  }
+  alert(`Added ${firstFive.length} ingredients from ${s.name}`);
+}
+
+
 
   return (
     <section className="max-w-3xl mx-auto mb-10 space-y-4">
@@ -91,18 +105,18 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
         </label>
         <Input
           id="ai-search-input"
-          placeholder="e.g. cheap high protein meal prep"
+          placeholder="e.g. high protein meal prep with salmon"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-describedby="ai-search-help"
         />
         <p id="ai-search-help" className="text-xs text-gray-500">
-          Start typing (3+ characters) to get AI-powered meal ideas. Click “Use this idea” to add ingredients to your groceries.
+          Start typing to get AI-powered meal ideas!
         </p>
       </div>
 
       {loading && (
-        <p className="text-sm text-gray-600 dark:text-gray-300">Thinking of suggestions…</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Loading meal suggestions…</p>
       )}
 
       {error && (
@@ -143,7 +157,7 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
                 className="mt-2"
                 onClick={() => handleUseIdea(s)}
               >
-                Use this idea
+                Add Groceries
               </Button>
             </Card>
           ))}
