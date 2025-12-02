@@ -53,7 +53,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
       if (!token) throw new Error("You must be logged in to add groceries");
 
       // Fetch current groceries
-      const currentRes = await fetch("http://127.0.0.1:8000/groceries", {
+      const currentRes = await fetch("https://foodablebackend.onrender.com/groceries", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -72,7 +72,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
           protein: 0,
         };
 
-        const res = await fetch("http://127.0.0.1:8000/groceries", {
+        const res = await fetch("https://foodablebackend.onrender.com/groceries", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",

@@ -22,7 +22,7 @@ function formatSmartDate(date: Date) {
 }
 
 async function fetchPost(id: number): Promise<PostDetail | null> {
-  const res = await fetch(`http://127.0.0.1:8000/posts/${id}`);
+  const res = await fetch(`https://foodablebackend.onrender.com/posts/${id}`);
   if (!res.ok) return null;
   return res.json();
 }

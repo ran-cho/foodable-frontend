@@ -147,11 +147,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-600 mt-6">
-          By continuing, you agree to Foodable's Terms of Service and Privacy
-          Policy
-        </p>
       </div>
     </div>
   );

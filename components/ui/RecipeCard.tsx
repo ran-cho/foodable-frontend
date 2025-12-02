@@ -15,7 +15,7 @@ async function fetchMe(): Promise<User | null> {
   const token = localStorage.getItem("foodable_token");
   if (!token) return null;
 
-  const res = await fetch("http://127.0.0.1:8000/auth/me", {
+  const res = await fetch("https://foodablebackend.onrender.com/auth/me", {
     headers: { Authorization: `Bearer ${token}` },
   });
 

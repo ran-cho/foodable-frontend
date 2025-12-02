@@ -3,7 +3,6 @@ export interface Recipe {
   name: string;
   ingredients?: string[];
   instructions?: string;
-  category?: "Breakfast" | "Lunch" | "Dinner";
 }
 
 // Auth Types
