@@ -13,6 +13,9 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const text = await res.text().catch(() => "");
     throw new Error(`API ${res.status} ${res.statusText}: ${text}`);
   }
+  if (res.status === 204) {
+    return null as T;
+  }
   return res.json() as Promise<T>;
 }
 
@@ -34,6 +37,8 @@ export const GroceriesAPI = {
   get: (id: number) => api<Grocery>(`/groceries/${id}`),
   create: (data: GroceryCreate) =>
     api<Grocery>("/groceries/", { method: "POST", body: JSON.stringify(data) }),
+  delete: (id: number) =>
+    api<null>(`/groceries/${id}`, { method: "DELETE" }),
 };
 
 // ===== Recipes API =====
