@@ -67,7 +67,6 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
         const payload = {
           name: ingredient,
-          category: recipe.category || "General",
           calories: 0,
           protein: 0,
         };
@@ -133,11 +132,6 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
       {/* Recipe Header */}
       <div>
         <div className="flex items-center gap-3 mb-4">
-          {recipe.category && (
-            <span className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
-              {recipe.category}
-            </span>
-          )}
         </div>
         <h1 className="text-4xl font-bold text-gray-900 mb-4">{recipe.name}</h1>
       </div>

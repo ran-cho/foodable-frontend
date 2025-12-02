@@ -65,10 +65,6 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       <div className="border rounded-lg p-4 hover:shadow-lg cursor-pointer transition">
         <h2 className="text-xl font-bold">{recipe.name}</h2>
 
-        {recipe.category && (
-          <p className="text-gray-600 text-sm mt-1">{recipe.category}</p>
-        )}
-
         {recipe.ingredients && recipe.ingredients.length > 0 && (
           <p className="text-gray-600 text-sm mt-1">
             Ingredients: {recipe.ingredients.join(", ")}
