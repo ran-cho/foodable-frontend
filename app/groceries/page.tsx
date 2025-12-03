@@ -6,11 +6,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AddGroceryForm } from "@/components/groceries/AddGroceryForm";
-import { useAddGrocery } from "@/hooks/useAddGrocery";
 import { useDeleteGrocery } from "@/hooks/useDeleteGrocery";
+import { useEffect, useState } from "react";
 
 async function fetchGroceries() {
-  const token = localStorage.getItem("foodable_token");
+  const token = typeof window !== "undefined"
+    ? localStorage.getItem("foodable_token")
+    : null;
+
   if (!token) return null;
 
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/groceries/`, {
@@ -24,9 +27,17 @@ async function fetchGroceries() {
 export default function GroceriesPage() {
   const router = useRouter();
 
+  // Track login state 
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setHasToken(!!localStorage.getItem("foodable_token"));
+  }, []);
+
   const { data: groceries, isLoading, error } = useQuery({
     queryKey: ["groceries"],
     queryFn: fetchGroceries,
+    enabled: hasToken === true, // only run when token is known
   });
 
   const { mutate: deleteGrocery, isPending: deleting } = useDeleteGrocery();
@@ -37,7 +48,10 @@ export default function GroceriesPage() {
     }
   }
 
-  if (!localStorage.getItem("foodable_token")) {
+  // loading client-side localStorage
+  if (hasToken === null) return null;
+
+  if (!hasToken) {
     return (
       <div className="min-h-screen flex items-center justify-center text-center p-8">
         <p className="text-gray-700 dark:text-gray-300">
@@ -69,7 +83,9 @@ export default function GroceriesPage() {
       </div>
 
       {isLoading && (
-        <p className="text-center text-gray-600 dark:text-gray-300">Loading groceries…</p>
+        <p className="text-center text-gray-600 dark:text-gray-300">
+          Loading groceries…
+        </p>
       )}
 
       {error && (
