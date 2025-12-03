@@ -10,7 +10,7 @@ import { useAddGrocery } from "@/hooks/useAddGrocery";
 import { useDeleteGrocery } from "@/hooks/useDeleteGrocery";
 import { AddGroceryForm } from "@/components/groceries/AddGroceryForm";
 
-export default function DashboardPage() {
+export default function GroceriesPage() {
   const router = useRouter();
   const { data: items = [], isLoading, error } = useGroceries();
   const { mutate: deleteGrocery, isPending: deleting } = useDeleteGrocery();
@@ -24,11 +24,22 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black p-8">
       <h1 className="text-4xl font-bold text-black dark:text-zinc-50 mb-8 text-center">
-        Dashboard
+        Groceries
       </h1>
 
       <AddGroceryForm />
+      <div className="max-w-3xl mx-auto mb-10 text-center">
+        <p className="text-gray-700 dark:text-gray-300 text-sm mb-3">
+          Not sure what groceries to add?
+        </p>
 
+        <button
+          onClick={() => router.push("/ai-search")}
+          className="px-5 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+        >
+          🤖 Ask AI to suggest meals & ingredients
+        </button>
+      </div>
       {/* Empty State */}
       {items.length === 0 ? (
         <div className="text-center text-gray-600 dark:text-gray-300">
@@ -49,7 +60,15 @@ export default function DashboardPage() {
                   {g.name}
                 </h2>
                 <p className="text-gray-700 dark:text-gray-300">
-                  {(g.category ?? "—")} · {(g.calories ?? "?")} kcal · {(g.protein ?? "?")} g protein
+                  {g.category ?? "—"}
+
+                  {g.calories != null && (
+                    <> · {g.calories} kcal</>
+                  )}
+
+                  {g.protein != null && (
+                    <> · {g.protein} g protein</>
+                  )}
                 </p>
               </div>
 
