@@ -170,6 +170,10 @@ export type AISuggestionRequest = {
   max_results?: number;
 };
 
+export type AISuggestionResponse = {
+  suggestions: AISuggestion[];
+};
+
 export type AISuggestedRecipe = {
   name: string;
   description: string;
@@ -190,16 +194,22 @@ export type AISuggestion = {
   estimated_cost?: number | null;
 };
 
+// AI endpoints
 export const AIAPI = {
   getSuggestions: (data: AISuggestionRequest) =>
-    api<AISuggestedRecipe[]>("/ai/suggest", { method: "POST", body: JSON.stringify(data) }),
+    api<AISuggestionResponse>("/ai/suggest", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 export const AiAPI = {
   suggest: (payload: AISuggestionRequest) =>
-    api<AISuggestion[]>("/ai/suggest", { method: "POST", body: JSON.stringify(payload) }),
+    api<AISuggestionResponse>("/ai/suggest", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };
-
 // ===== React Query Hooks =====
 
 // Auth hooks

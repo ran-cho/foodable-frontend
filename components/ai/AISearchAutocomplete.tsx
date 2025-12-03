@@ -17,7 +17,6 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // use your existing mutation hook
   const { mutate: addGrocery } = useAddGrocery();
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
           max_results: 3,
         });
 
-        const list = Array.isArray(res.suggestions) ? res.suggestions : [];
+        const list = res.suggestions ?? [];
 
         if (!cancelled) {
           setSuggestions(list);
@@ -55,7 +54,7 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
           setLoading(false);
         }
       }
-    }, 400); // debounce typing
+    }, 400); 
 
     return () => {
       cancelled = true;
@@ -66,11 +65,8 @@ export function AISearchAutocomplete({ label = "Search meals" }: Props) {
   // Function to clean ingredient names on dashboard by removing quantities and descriptors
   function cleanIngredientName(text: string) {
   return text
-    // remove fractions / numbers + units
     .replace(/^\s*\d+([\/.]\d+)?\s*[a-zA-Z]*\s*/g, "")
-    // remove parentheses like (minced)
     .replace(/\(.*?\)/g, "")
-    // trim leftover spaces
     .trim();
 }
 
