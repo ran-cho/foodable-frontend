@@ -1,18 +1,45 @@
 "use client";
+export const dynamic = "force-dynamic";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useGroceries } from "@/hooks/useGroceries";
-import { useAddGrocery } from "@/hooks/useAddGrocery";
-import { useDeleteGrocery } from "@/hooks/useDeleteGrocery";
 import { AddGroceryForm } from "@/components/groceries/AddGroceryForm";
+import { useDeleteGrocery } from "@/hooks/useDeleteGrocery";
+import { useEffect, useState } from "react";
+
+async function fetchGroceries() {
+  const token = typeof window !== "undefined"
+    ? localStorage.getItem("foodable_token")
+    : null;
+
+  if (!token) return null;
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/groceries/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch groceries");
+  return res.json();
+}
 
 export default function GroceriesPage() {
   const router = useRouter();
-  const { data: items = [], isLoading, error } = useGroceries();
+
+  // Track login state 
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setHasToken(!!localStorage.getItem("foodable_token"));
+  }, []);
+
+  const { data: groceries, isLoading, error } = useQuery({
+    queryKey: ["groceries"],
+    queryFn: fetchGroceries,
+    enabled: hasToken === true, // only run when token is known
+  });
+
   const { mutate: deleteGrocery, isPending: deleting } = useDeleteGrocery();
 
   function onDelete(id: number | string) {
@@ -21,13 +48,27 @@ export default function GroceriesPage() {
     }
   }
 
+  // loading client-side localStorage
+  if (hasToken === null) return null;
+
+  if (!hasToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center p-8">
+        <p className="text-gray-700 dark:text-gray-300">
+          Please log in to view your groceries.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black p-8">
+    <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans p-8">
       <h1 className="text-4xl font-bold text-black dark:text-zinc-50 mb-8 text-center">
         Groceries
       </h1>
 
       <AddGroceryForm />
+
       <div className="max-w-3xl mx-auto mb-10 text-center">
         <p className="text-gray-700 dark:text-gray-300 text-sm mb-3">
           Not sure what groceries to add?
@@ -40,51 +81,55 @@ export default function GroceriesPage() {
           🤖 Ask AI to suggest meals & ingredients
         </button>
       </div>
-      {/* Empty State */}
-      {items.length === 0 ? (
+
+      {isLoading && (
+        <p className="text-center text-gray-600 dark:text-gray-300">
+          Loading groceries…
+        </p>
+      )}
+
+      {error && (
+        <p className="text-center text-red-500">Error loading groceries.</p>
+      )}
+
+      {!isLoading && groceries?.length === 0 && (
         <div className="text-center text-gray-600 dark:text-gray-300">
           No groceries yet — add one above!
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {items.map((g: any) => (
-            <Card
-              key={g.id}
-              className="p-6 bg-white dark:bg-zinc-800 shadow-md rounded-lg transition"
-            >
-              <div
-                className="cursor-pointer"
-                onClick={() => router.push(`/groceries/${g.id}`)}
-              >
-                <h2 className="text-xl font-semibold mb-2 text-black dark:text-zinc-50">
-                  {g.name}
-                </h2>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {g.category ?? "—"}
-
-                  {g.calories != null && (
-                    <> · {g.calories} kcal</>
-                  )}
-
-                  {g.protein != null && (
-                    <> · {g.protein} g protein</>
-                  )}
-                </p>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <Button
-                  variant="destructive"
-                  disabled={deleting}
-                  onClick={() => onDelete(g.id)}
-                >
-                  {deleting ? "Deleting..." : "Delete"}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {groceries?.map((g: any) => (
+          <Card
+            key={g.id}
+            className="p-6 bg-white dark:bg-zinc-800 shadow-md rounded-lg transition"
+          >
+            <div
+              className="cursor-pointer"
+              onClick={() => router.push(`/groceries/${g.id}`)}
+            >
+              <h2 className="text-xl font-semibold mb-2 text-black dark:text-zinc-50">
+                {g.name}
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                {g.category ?? "—"}
+                {g.calories != null && <> · {g.calories} kcal</>}
+                {g.protein != null && <> · {g.protein} g protein</>}
+              </p>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                variant="destructive"
+                disabled={deleting}
+                onClick={() => onDelete(g.id)}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
