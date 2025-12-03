@@ -3,22 +3,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { useAddComment, useToggleLike } from "@/lib/api";
+import { useAddComment, useToggleLike,} from "@/lib/api";
+import { useDeletePost } from "@/hooks/useDeletePost";
+import { useDeleteComment } from "@/hooks/useDeleteComment";
+import { useAuthContext } from "@/lib/auth-context";
 import { PostDetail } from "@/types";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import Link from "next/link";
 
-
 function formatSmartDate(date: Date) {
-  if (isToday(date)) {
-    return format(date, "h:mm a"); 
-  } else if (isYesterday(date)) {
-    return `Yesterday ${format(date, "h:mm a")}`;
-  } else if (differenceInDays(new Date(), date) < 7) {
-    return format(date, "EEE h:mm a"); 
-  } else {
-    return format(date, "MMM d, yyyy"); 
-  }
+  if (isToday(date)) return format(date, "h:mm a");
+  else if (isYesterday(date)) return `Yesterday ${format(date, "h:mm a")}`;
+  else if (differenceInDays(new Date(), date) < 7) return format(date, "EEE h:mm a");
+  else return format(date, "MMM d, yyyy");
 }
 
 async function fetchPost(id: number): Promise<PostDetail | null> {
@@ -31,8 +28,9 @@ export default function PostPage() {
   const { id } = useParams();
   const postId = Number(id);
   const router = useRouter();
+  const { user } = useAuthContext();
 
-  const { data: post, isLoading, error, refetch } = useQuery<PostDetail | null>({
+  const { data: post, isLoading, refetch } = useQuery<PostDetail | null>({
     queryKey: ["post", postId],
     queryFn: () => fetchPost(postId),
     enabled: !!postId,
@@ -40,6 +38,8 @@ export default function PostPage() {
 
   const toggleLikeMutation = useToggleLike();
   const addCommentMutation = useAddComment();
+  const deletePostMutation = useDeletePost();
+  const deleteCommentMutation = useDeleteComment();
 
   const [commentInput, setCommentInput] = useState("");
 
@@ -64,6 +64,27 @@ export default function PostPage() {
       refetch();
     } catch (err) {
       console.error("Failed to add comment:", err);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!post) return;
+    if (!confirm("Delete this post?")) return;
+    try {
+      await deletePostMutation.mutateAsync(post.id);
+      router.push("/community"); // go back to feed
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!confirm("Delete this comment?")) return;
+    try {
+      await deleteCommentMutation.mutateAsync(commentId);
+      refetch();
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
     }
   };
 
@@ -95,10 +116,18 @@ export default function PostPage() {
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500">
-              {formatSmartDate(new Date(post.created_at))}
-            </p>
+            <p className="text-sm text-gray-500">{formatSmartDate(new Date(post.created_at))}</p>
           </div>
+
+          {/* Delete Post Button */}
+          {user?.id === post.user.id && (
+            <button
+              onClick={handleDeletePost}
+              className="ml-2 px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg"
+            >
+              Delete
+            </button>
+          )}
         </div>
 
         {/* Post Content */}
@@ -142,19 +171,31 @@ export default function PostPage() {
         {/* Comments List */}
         <div className="space-y-3 mt-4">
           {post.comments.map((comment) => (
-            <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
-              <div className="flex justify-between items-center">
-                <Link
-                  href={`/users/${comment.user.id}`}
-                  className="text-sm font-semibold hover:underline"
-                >
-                  {comment.user.name || comment.user.email}
-                </Link>
-                <p className="text-xs text-gray-500">
-                  {formatSmartDate(new Date(comment.created_at))}
-                </p>
+            <div key={comment.id} className="bg-gray-50 p-3 rounded-lg flex justify-between items-start">
+              <div>
+                <div className="flex justify-between items-center">
+                  <Link
+                    href={`/users/${comment.user.id}`}
+                    className="text-sm font-semibold hover:underline"
+                  >
+                    {comment.user.name || comment.user.email}
+                  </Link>
+                  <p className="text-xs text-gray-500">
+                    {formatSmartDate(new Date(comment.created_at))}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
               </div>
-              <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+
+              {/* Delete Comment Button */}
+              {user?.id === comment.user.id && (
+                <button
+                  onClick={() => handleDeleteComment(comment.id)}
+                  className="ml-4 px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded-lg"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           ))}
         </div>

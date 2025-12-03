@@ -2,30 +2,31 @@
 
 import { useState } from "react";
 import { usePost, useToggleLike, useAddComment } from "@/lib/api";
+import { useAuthContext } from "@/lib/auth-context";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
+import { useDeletePost } from "@/hooks/useDeletePost";
+import { useDeleteComment } from "@/hooks/useDeleteComment";
 
 type PostDetailModalProps = {
   postId: number;
   onClose: () => void;
 };
 
-
 function formatSmartDate(date: Date) {
-  if (isToday(date)) {
-    return format(date, "h:mm a"); 
-  } else if (isYesterday(date)) {
-    return `Yesterday ${format(date, "h:mm a")}`;
-  } else if (differenceInDays(new Date(), date) < 7) {
-    return format(date, "EEE h:mm a");
-  } else {
-    return format(date, "MMM d, yyyy"); 
-  }
+  if (isToday(date)) return format(date, "h:mm a");
+  if (isYesterday(date)) return `Yesterday ${format(date, "h:mm a")}`;
+  if (differenceInDays(new Date(), date) < 7) return format(date, "EEE h:mm a");
+  return format(date, "MMM d, yyyy");
 }
 
 export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
+  const { user: currentUser } = useAuthContext();
   const { data: post, isLoading } = usePost(postId);
   const toggleLikeMutation = useToggleLike();
   const addCommentMutation = useAddComment();
+  const deletePostMutation = useDeletePost();
+  const deleteCommentMutation = useDeleteComment();
+
   const [commentContent, setCommentContent] = useState("");
 
   const handleLike = async () => {
@@ -51,6 +52,19 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
     }
   };
 
+  const handleDeletePost = () => {
+    if (!post) return;
+    if (confirm("Delete this post?")) {
+      deletePostMutation.mutate(post.id, { onSuccess: onClose });
+    }
+  };
+
+  const handleDeleteComment = (commentId: number) => {
+    if (confirm("Delete this comment?")) {
+      deleteCommentMutation.mutate(commentId);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="absolute inset-0" onClick={onClose} />
@@ -59,24 +73,34 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Post Details</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <svg
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-2">
+            {currentUser?.id === post?.user.id && (
+              <button
+                onClick={handleDeletePost}
+                className="text-red-500 text-sm px-2 py-1 rounded hover:bg-red-50 transition"
+              >
+                Delete Post
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -91,8 +115,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
               <div className="mb-6">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                    {post.user.name?.[0]?.toUpperCase() ||
-                      post.user.email[0].toUpperCase()}
+                    {post.user.name?.[0]?.toUpperCase() || post.user.email[0].toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -105,15 +128,11 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {formatSmartDate(new Date(post.created_at))}
-                    </p>
+                    <p className="text-sm text-gray-500">{formatSmartDate(new Date(post.created_at))}</p>
                   </div>
                 </div>
 
-                <p className="text-gray-800 mb-4 whitespace-pre-wrap">
-                  {post.content}
-                </p>
+                <p className="text-gray-800 mb-4 whitespace-pre-wrap">{post.content}</p>
 
                 {/* Like Button */}
                 <button
@@ -121,20 +140,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                   disabled={toggleLikeMutation.isPending}
                   className="flex items-center gap-2 text-gray-600 hover:text-orange-600 transition"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium">{post.likes_count} likes</span>
+                  ❤️ <span className="text-sm font-medium">{post.likes_count} likes</span>
                 </button>
               </div>
 
@@ -170,15 +176,25 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                     post.comments.map((comment) => (
                       <div key={comment.id} className="flex gap-3">
                         <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                          {comment.user.name?.[0]?.toUpperCase() ||
-                            comment.user.email[0].toUpperCase()}
+                          {comment.user.name?.[0]?.toUpperCase() || comment.user.email[0].toUpperCase()}
                         </div>
                         <div className="flex-1">
-                          <div className="bg-gray-50 rounded-lg px-3 py-2">
-                            <p className="font-semibold text-sm text-gray-900 mb-1">
-                              {comment.user.name || comment.user.email}
-                            </p>
-                            <p className="text-sm text-gray-800">{comment.content}</p>
+                          <div className="bg-gray-50 rounded-lg px-3 py-2 flex justify-between items-start">
+                            <div>
+                              <p className="font-semibold text-sm text-gray-900 mb-1">
+                                {comment.user.name || comment.user.email}
+                              </p>
+                              <p className="text-sm text-gray-800">{comment.content}</p>
+                            </div>
+
+                            {currentUser?.id === comment.user.id && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="text-red-500 text-xs ml-2 hover:bg-red-50 px-1 py-0.5 rounded transition"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                           <p className="text-xs text-gray-500 mt-1 ml-3">
                             {formatSmartDate(new Date(comment.created_at))}
