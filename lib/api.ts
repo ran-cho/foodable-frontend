@@ -181,14 +181,28 @@ export type AISuggestedRecipe = {
   cookTime?: string;
 };
 
+export type AISuggestion = {
+  name: string;
+  description: string;
+  ingredients: string[];
+  calories?: number | null;
+  protein?: number | null;
+  estimated_cost?: number | null;
+};
+
 export const AIAPI = {
   getSuggestions: (data: AISuggestionRequest) =>
     api<AISuggestedRecipe[]>("/ai/suggest", { method: "POST", body: JSON.stringify(data) }),
 };
 
+export const AiAPI = {
+  suggest: (payload: AISuggestionRequest) =>
+    api<AISuggestion[]>("/ai/suggest", { method: "POST", body: JSON.stringify(payload) }),
+};
+
 // ===== React Query Hooks =====
 
-// Auth
+// Auth hooks
 export function useAuth() {
   return useQuery({ queryKey: ["auth", "me"], queryFn: AuthAPI.getMe, retry: false, staleTime: Infinity });
 }
@@ -212,7 +226,7 @@ export function useLogout() {
   };
 }
 
-// Community Hooks
+// Community hooks
 export function usePosts() {
   return useQuery({ queryKey: ["posts"], queryFn: CommunityAPI.listPosts });
 }
@@ -254,7 +268,7 @@ export function useUserProfile(userId: number) {
   return useQuery({ queryKey: ["userProfile", userId], queryFn: () => CommunityAPI.getUserProfile(userId), enabled: !!userId && userId > 0 });
 }
 
-// Recipes Hooks
+// Recipes hooks
 export function useRecipes() {
   return useQuery({ queryKey: ["recipes"], queryFn: RecipesAPI.list });
 }
@@ -268,7 +282,7 @@ export function useCreateRecipe() {
   return useMutation({ mutationFn: RecipesAPI.create, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recipes"] }) });
 }
 
-// AI Hooks
+// AI hooks
 export function useAISuggestions() {
   return useMutation({ mutationFn: AIAPI.getSuggestions });
 }

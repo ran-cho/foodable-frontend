@@ -96,7 +96,7 @@ export default function RecipesPage() {
             <Button
               className="text-lg px-6 py-4 bg-green-600 hover:bg-green-700 text-white shadow-lg rounded-xl transition-transform transform hover:scale-105"
             >
-              🤖 AI Assistant
+              Need Suggestions?
             </Button>
           </Link>
         </div>

@@ -26,7 +26,7 @@ export default function AiAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your AI recipe assistant. Ask me anything about recipes, cooking tips, or meal planning!",
+      content: "Hi! I'm your AI recipe assistant.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -190,17 +190,7 @@ export default function AiAssistantPage() {
                             </ul>
                           </div>
 
-                          {/* Action button */}
-                          <Button 
-                            size="sm" 
-                            className="mt-3 w-full"
-                            onClick={() => {
-                              setQuery(`Tell me more about ${suggestion.name}`);
-                            }}
-                          >
-                            Get cooking instructions
-                          </Button>
-                        </Card>
+                         </Card>
                       ))}
                     </div>
                   )}
